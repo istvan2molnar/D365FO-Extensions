@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFRecurringFileDownload</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// Function to download the file of the recurring integration queue.
+/// </summary>
+class DMFRecurringFileDownload
+{
+    IntegrationActivityMessageTable iActivityMessageTable;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Runs the class with the specified arguments.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {
+        if (_args.record().TableId != tableNum(IntegrationActivityMessageTable))
+        {
+            throw Error("@XtendDMFRFD:DMFRecurringFileDownload_Class_MessageWrongCaller");
+        }
+
+        DMFRecurringFileDownload recurringFileDownload = DMFRecurringFileDownload::construct();
+        recurringFileDownload.parmActivityMessageTable(_args.record());
+        recurringFileDownload.run();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Construct method of the class.
+    /// </summary>
+    public static DMFRecurringFileDownload construct()
+    {
+        return new DMFRecurringFileDownload();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmActivityMessageTable</Name>
+				<Source><![CDATA[
+    public IntegrationActivityMessageTable parmActivityMessageTable(IntegrationActivityMessageTable _iActivityMessageTable = iActivityMessageTable)
+    {
+        iActivityMessageTable = _iActivityMessageTable;
+        return iActivityMessageTable;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>run</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Execute the main function of the class - find and popup the file of the recurring queue
+    /// </summary>
+    public void run()
+    {
+        DMFExecution executionLocal;
+        IntegrationActivityRuntimeExecutionTable activityRuntimeExecutionLocal;
+        IntegrationActivityMessageTable messageTableLocal;
+
+        select firstonly ExecutionId, RecId from executionLocal
+            join activityRuntimeExecutionLocal 
+                where executionLocal.ExecutionId == activityRuntimeExecutionLocal.ExecutionId
+            join messageTableLocal 
+                where   messageTableLocal.ActivityRuntimeExecutionCorrelationId == activityRuntimeExecutionLocal.CorrelationId &&
+                        messageTableLocal.MessageId == iActivityMessageTable.MessageId;
+
+        SharedServiceUnitURL downloadUrl;
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        select firstonly FilePath, DefinitionGroup, Entity, ExecutionId, RecId from definitionGroupExecution where definitionGroupExecution.ExecutionId == executionLocal.ExecutionId;
+        DMFDataSource dataSource = DMFDataSource::find(DMFDefinitionGroupEntity::find(definitionGroupExecution.DefinitionGroup, definitionGroupExecution.Entity).Source);
+        DMFDefinitionGroup definitionGroup = DMFDefinitionGroup::find(definitionGroupExecution.DefinitionGroup);
+
+        if (definitionGroup.OperationType == DMFOperationType::Import)
+        {
+            if (definitionGroupExecution.RecId && definitionGroupExecution.FilePath)
+            {
+                downloadUrl = DMFStagingWriter::getDownloadURLFromFileId(definitionGroupExecution.FilePath);
+                File::SendFileToUser(File::UseFileFromURL(downloadUrl), strFmt("%1.%2", guid2Str(iActivityMessageTable.MessageId), dataSource.DefaultExtension));
+            }
+            else
+            {
+                warning("@XtendDMFRFD:DMFRecurringFileDownload_Class_MessageNoFile");
+            }
+        }
+        else if(definitionGroup.OperationType == DMFOperationType::Export)
+        {
+            //copy from DMFFormUtil.downloadFile(...) which is [InternalUseOnlyAttribute]
+            DMFEntityName entityName;
+            DMFEntity dMFEntity = DMFEntity::find(definitionGroupExecution.Entity);
+
+            if (dMFEntity.ParentEntityName != '')
+            {
+                entityName = dMFEntity.ParentEntityName;
+            }
+            else
+            {
+                entityName = definitionGroupExecution.Entity;
+            }
+
+            DMFEntityExportDetails exportDetails;
+
+            select firstonly1 SampleFilePath, DefinitionGroup from exportDetails
+            where exportDetails.DefinitionGroup == definitionGroupExecution.DefinitionGroup
+                && exportDetails.ExecutionId == definitionGroupExecution.ExecutionId
+                && exportDetails.Entity == entityName;
+
+            if (exportDetails.RecId && exportDetails.SampleFilePath)
+            {
+                downloadUrl = DMFDataPopulation::getAzureBlobReadUrl(str2Guid(exportDetails.SampleFilePath));
+                System.IO.Stream stream = File::UseFileFromURL(downloadUrl);
+
+                //replace DMFDataPopulation::getFileExtensionFromURL(downloadUrl) which is [InternalUseOnlyAttribute]
+                System.Uri uri = new System.Uri(downloadUrl);
+                str fileExt = "";
+                if (uri != null)
+                {
+                    fileExt = System.IO.Path::GetExtension(uri.LocalPath);
+                }
+
+                File::SendFileToUser(stream, strFmt('%1-%2.%3', exportDetails.DefinitionGroup, exportDetails.Entity, fileExt));
+            }
+            else
+            {
+                warning(strFmt("@DMF:DMFNoExportFileFoundForEntity", definitionGroupExecution.Entity, definitionGroupExecution.ExecutionId));
+            }
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>IntegrationActivityMessageTable_OnActivated</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Enable/disable this function on the Recurring queue form
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    [FormDataSourceEventHandler(formDataSourceStr(DMFRecurringDataJobMessages, IntegrationActivityMessageTable), FormDataSourceEventType::Activated)]
+    public static void IntegrationActivityMessageTable_OnActivated(FormDataSource sender, FormDataSourceEventArgs e)
+    {
+        IntegrationActivityMessageTable localActivityMessageTable = sender.cursor();
+        FormRun callerForm = sender.formRun();
+        int targetControl = callerForm.controlId(formControlStr(DMFRecurringDataJobMessages, DMFRecurringFileDownload));
+
+        if (targetControl == 0)
+        {
+            return;
+        }
+
+        if (localActivityMessageTable.Status == IntegrationActivityMessageStatus::Enqueued 
+            || localActivityMessageTable.Status == IntegrationActivityMessageStatus::PreProcessing
+            || localActivityMessageTable.Status == IntegrationActivityMessageStatus::Processing)
+        {
+            callerForm.control(targetControl).enabled(false);
+        }
+        else
+        {
+            callerForm.control(targetControl).enabled(true);
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
