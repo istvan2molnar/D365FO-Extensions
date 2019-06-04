@@ -3,7 +3,7 @@ Microsoft Dynamics 365 for Finance and Operations - small &amp; useful extension
 
 This repository contains useful extensions for Dynamics 365 for Finance and Operations.
 
-Source code of each tool/extension is under sub-branches and the the deployable package is provided under the master branch.
+Source code of each tool/extension is under sub-branches and the deployable package is provided under the master branch.
 
 # DISCLAIMER
 
