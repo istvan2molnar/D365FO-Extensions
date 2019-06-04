@@ -7,6 +7,8 @@ Source code of each tool/extension is under sub-branches and the deployable pack
 
 # DMF Recurring file download
 This tool/extension makes possible to view and download the message(s) which was sent to Inbound Recurring Integration Queue (even it's failed or processed).
+Relates to this topic:
+https://experience.dynamics.com/ideas/idea/?ideaid=7e1d40c7-7c41-e711-80c0-00155d7cb38d
 
 # DISCLAIMER
 
