@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpUIBuilder</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// DMF Stage table CleanUp function - UI builder class
+/// </summary>
+class DMFStagingCleanUpUIBuilder extends SysOperationAutomaticUIBuilder
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>postBuild</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Post build method
+    /// </summary>
+    public void postBuild()
+    {
+        super();
+
+        DMFStagingCleanUpContract stagingCleanUpContract = this.dataContractObject();
+
+        DialogField dialogField = this.bindInfo().getDialogField(stagingCleanUpContract, methodstr(DMFStagingCleanUpContract, parmDefinitionGroup));
+
+        dialogField.registerOverrideMethod(
+          methodStr(FormStringControl, lookup),
+          methodStr(DMFStagingCleanUpUIBuilder,lookupDefGroup),
+          this);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>lookupDefGroup</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// LookUp method of the DefinitionGroup parameter
+    /// </summary>
+    /// <param name = "_formStringControl">Form control</param>
+    public void lookupDefGroup(FormStringControl _formStringControl)
+    {
+        SysTableLookup sysTablelookup = SysTableLookup::newParameters(tableNum(DMFDefinitionGroupEntity),_formStringControl);
+        sysTablelookup.addLookupfield(fieldNum(DMFDefinitionGroupEntity, DefinitionGroup));
+        sysTablelookup.addLookupfield(fieldNum(DMFDefinitionGroupEntity,Entity));
+
+        Query query = new Query();
+        QueryBuildDataSource qbds = query.addDataSource(tableNum(DMFDefinitionGroupEntity));
+        QueryBuildRange qbr = qbds.addRange(fieldNum(DMFDefinitionGroupEntity, Entity));
+
+        DMFStagingCleanUpContract localContract = this.dataContractObject();
+        Query contractQuery = localContract.getQuery();
+        qbds = contractQuery.dataSourceTable(tableNum(DMFEntity));
+        str filter = '';
+        QueryBuildRange qbrContract = qbds.findRange(fieldNum(DMFEntity, EntityName));
+        if (qbrContract)
+        {
+            filter = qbrContract.value();
+        }
+        qbr.value(filter);
+
+        sysTablelookup.parmQuery(query);
+        sysTablelookup.performFormLookup();
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

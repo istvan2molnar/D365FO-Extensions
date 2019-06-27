@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxSecurityPrivilege xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpMaintain</Name>
+	<Description>@XtendDMFCS:DMFStagingCleanUpMaintain_Privileges_Description</Description>
+	<Label>@XtendDMFCS:DMFStagingCleanUpMaintain_Privileges_Label</Label>
+	<DataEntityPermissions />
+	<DirectAccessPermissions />
+	<EntryPoints>
+		<AxSecurityEntryPointReference>
+			<Name>DMFStagingCleanUpService</Name>
+			<Grant>
+				<Correct>Allow</Correct>
+				<Create>Allow</Create>
+				<Delete>Allow</Delete>
+				<Read>Allow</Read>
+				<Update>Allow</Update>
+			</Grant>
+			<ObjectName>DMFStagingCleanUpService</ObjectName>
+			<ObjectType>MenuItemAction</ObjectType>
+			<Forms />
+		</AxSecurityEntryPointReference>
+		<AxSecurityEntryPointReference>
+			<Name>DMFStagingCleanUpScheduler</Name>
+			<Grant>
+				<Read>Allow</Read>
+			</Grant>
+			<ObjectName>DMFStagingCleanUpScheduler</ObjectName>
+			<ObjectType>MenuItemDisplay</ObjectType>
+			<Forms>
+				<AxSecurityEntryPointReferenceForm>
+					<Name>DMFStagingCleanUpScheduler</Name>
+					<Controls />
+					<DataSources />
+				</AxSecurityEntryPointReferenceForm>
+			</Forms>
+		</AxSecurityEntryPointReference>
+	</EntryPoints>
+	<FormControlOverrides />
+</AxSecurityPrivilege>

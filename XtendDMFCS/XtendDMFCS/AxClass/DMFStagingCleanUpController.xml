@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpController</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// DMF Stage table CleanUp function - controller class
+/// </summary>
+[SysOperationJournaledParametersAttribute(true)]
+class DMFStagingCleanUpController extends SysOperationServiceController
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>new</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// New method
+    /// </summary>
+    protected void new()
+    {
+        super(classStr(DMFStagingCleanUpService), methodStr(DMFStagingCleanUpService, cleanUpStage), SysOperationExecutionMode::Synchronous);
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Construct method
+    /// </summary>
+    /// <returns>Runnable class</returns>
+    public static DMFStagingCleanUpController construct()
+    {
+        DMFStagingCleanUpController controller = new DMFStagingCleanUpController();
+
+        controller.parmShowDialog(true); 
+        controller.parmShowProgressForm(false);
+
+        return controller;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Main method of the class/service
+    /// </summary>
+    /// <param name = "_args">Information from the caller</param>
+    public static void main(Args _args)
+    {
+        DMFStagingCleanUpController controller = DMFStagingCleanUpController::construct();
+        DMFStagingCleanUpContract contract = controller.getDataContractObject();
+
+        if (_args.record().RecId && _args.record().TableId == tableNum(DMFStagingCleanUpTmp))
+        {
+            DMFStagingCleanUpTmp stagingCleanUpTmp = _args.record();
+            
+            Query localQuery = contract.getQuery();
+            QueryBuildDataSource qbds = localQuery.dataSourceTable(tableNum(DMFEntity));
+            qbds.clearRanges();
+            SysQuery::findOrCreateRange(qbds, fieldNum(DMFEntity, EntityName)).value(stagingCleanUpTmp.EntityName);
+            contract.setQuery(localQuery);
+
+            if(stagingCleanUpTmp.DefinitionGroupName)
+            {
+                contract.parmDefinitionGroup(stagingCleanUpTmp.DefinitionGroupName);
+            }
+            
+        }
+
+        controller.startOperation();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>validate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Validate method
+    /// </summary>
+    /// <returns>Result of the validation</returns>
+    protected boolean validate()
+    {
+        DMFStagingCleanUpContract contract;
+        boolean ret = true;
+        contract = this.getDataContractObject();
+        if(!contract.parmNumberOfDays())
+        {
+            error("@XtendDMFCS:DMFStagingCleanUpController_Validate_Error");
+            ret = false;
+        }
+
+        if (ret && contract.parmDefinitionGroup() && !DMFDefinitionGroup::find(contract.parmDefinitionGroup()).RecId)
+        {
+            error(strFmt("@XtendDMFCS:DMFStagingCleanUpController_Validate_ErrorDefGroup", contract.parmDefinitionGroup()));
+            ret = false;
+        }
+
+        return ret;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>defaultCaption</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Caption overwrite
+    /// </summary>
+    /// <returns>Caption text</returns>
+    protected ClassDescription defaultCaption()
+    {
+        return "@XtendDMFCS:DMFStagingCleanUpController_Caption";
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

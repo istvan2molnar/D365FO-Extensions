@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpContract</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// DMF Stage table CleanUp function - data contract class
+/// </summary>
+[
+DataContractAttribute,
+SysOperationContractProcessingAttribute(classstr(DMFStagingCleanUpUIBuilder))
+]
+class DMFStagingCleanUpContract
+{
+    DMFStagingCleanUpDateSelector dateSelector;
+    DMFDefinitionGroupName definitionGroup;
+    Days numberOfDays;
+    str  packedQuery;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>parmDefinitionGroup</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Parm method - Definition group
+    /// </summary>
+    /// <param name = "_definitionGroup">Definition group</param>
+    /// <returns>Definition group</returns>
+    [
+    DataMemberAttribute,
+    SysOperationLabelAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_DefinitionGroup_Label")),
+    SysOperationHelpTextAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_DefinitionGroup_Help"))
+    ]
+    public DMFDefinitionGroupName parmDefinitionGroup(DMFDefinitionGroupName _definitionGroup = definitionGroup)
+    {
+        definitionGroup = _definitionGroup;
+        return definitionGroup;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmDateSelector</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Parm method - Date selector
+    /// </summary>
+    /// <param name = "_dateSelector">Date selector</param>
+    /// <returns>Date selector</returns>
+    [
+    DataMemberAttribute,
+    SysOperationLabelAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_DateSelector_Label")),
+    SysOperationHelpTextAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_DateSelector_Help"))
+    ]
+    public DMFStagingCleanUpDateSelector parmDateSelector(DMFStagingCleanUpDateSelector _dateSelector = dateSelector)
+    {
+        dateSelector = _dateSelector;
+        return dateSelector;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmNumberOfDays</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Parm method - Number of days
+    /// </summary>
+    /// <param name = "_numberOfDays">Number of days</param>
+    /// <returns>Number of days</returns>
+    [
+    DataMemberAttribute,
+    SysOperationLabelAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_NumberOfDays_Label")),
+    SysOperationHelpTextAttribute(literalStr("@XtendDMFCS:DMFStagingCleanUpContract_NumberOfDays_Help"))
+    ]
+    public Days parmNumberOfDays(Days _numberOfDays = numberOfDays)
+    {
+        numberOfDays = _numberOfDays;
+        return numberOfDays;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmPackedQuery</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Parm method - Query
+    /// </summary>
+    /// <param name = "_packedQuery">Query</param>
+    /// <returns>Query</returns>
+    [
+    DataMemberAttribute,
+    AifQueryTypeAttribute('_packedQuery', queryStr(DMFStagingCleanUpServiceQuery))
+    ]
+    public str parmPackedQuery(str _packedQuery = packedQuery)
+    {
+        packedQuery = _packedQuery;
+
+        return packedQuery;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>getQuery</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// This method unpacks the query and returns it as query object.
+    /// </summary>
+    /// <returns>Query</returns>
+    public Query getQuery()
+    {
+        return new Query(SysOperationHelper::base64Decode(packedQuery));
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>setQuery</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// This method takes a query object, encodes it and stores the packed query.
+    /// </summary>
+    /// <param name = "_query">Query</param>
+    public void setQuery(Query _query)
+    {
+        packedQuery = SysOperationHelper::base64Encode(_query.pack());
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
