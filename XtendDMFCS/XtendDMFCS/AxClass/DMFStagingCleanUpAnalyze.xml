@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpAnalyze</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// DMF Stage table CleanUp function - this class is created to analyze the content of the stage tables
+/// </summary>
+class DMFStagingCleanUpAnalyze
+{
+    DMFStagingCleanUpTmp stagingCleanUpTmp;
+    FormDataSource callerDataSource;
+
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>main</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Main method of the class/service
+    /// </summary>
+    /// <param name = "_args">Information from the caller</param>
+    public static void main(Args _args)
+    {
+        DMFStagingCleanUpAnalyze stagingCleanUpAnalyze = DMFStagingCleanUpAnalyze::construct();
+        stagingCleanUpAnalyze.calcEntity();
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>construct</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Construct method
+    /// </summary>
+    /// <returns>Runnable class</returns>
+    public static DMFStagingCleanUpAnalyze construct()
+    {
+        DMFStagingCleanUpAnalyze stagingCleanUpAnalyze = new DMFStagingCleanUpAnalyze();
+        return stagingCleanUpAnalyze;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcEntity</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Main function of the class which will execute the analysis of the stage table
+    /// </summary>
+    public void calcEntity()
+    {
+        DMFDefinitionGroupEntity definitionGroupEntity;
+        DMFEntity entity;
+
+        while select entity
+            exists join definitionGroupEntity where definitionGroupEntity.Entity == entity.EntityName
+        {
+            SysDictTable dictTable = SysDictTable::newName(entity.EntityTable);
+                
+            DMFDefinitionGroupExecution definitionGroupExecution;
+            Common common;
+            if (dictTable)
+            {
+                common = dictTable.makeRecord();
+
+                select count(RecId) from common
+                    join definitionGroupExecution
+                    where   common.(fieldName2id(dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                            && common.(fieldName2id(dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                            && definitionGroupExecution.Entity          == entity.EntityName;
+            }
+
+                
+            select firstonly CreatedDateTime, RecId from definitionGroupExecution
+                order by CreatedDateTime DESC
+                where definitionGroupExecution.Entity          == entity.EntityName;
+
+            UtcDateTime latestRun;
+            if (definitionGroupExecution.RecId)
+            {
+                latestRun = definitionGroupExecution.EndDateTime;
+            }
+
+            ttsbegin;
+            stagingCleanUpTmp.clear();
+            stagingCleanUpTmp.initValue();
+            stagingCleanUpTmp.EntityName            = entity.EntityName;
+            stagingCleanUpTmp.EntityTable           = entity.EntityTable;
+            stagingCleanUpTmp.RecordCount           = common.RecId;
+            stagingCleanUpTmp.LatestExecuted        = definitionGroupExecution.CreatedDateTime;
+
+            if (stagingCleanUpTmp.validateWrite())
+            {
+                stagingCleanUpTmp.write();
+            }
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calcDefinitionGroup</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Function of the class which will execute the analysis of the stage table again based on the data projects
+    /// </summary>
+    public void calcDefinitionGroup()
+    {
+        DMFDefinitionGroupEntity definitionGroupEntity;
+        while select definitionGroupEntity
+        {
+            DMFEntity entity;
+            select firstonly EntityName, EntityTable, RecId from entity
+                where   entity.EntityName == definitionGroupEntity.Entity
+                        && entity.EntityType == DMFEntityTypes::Entity;
+
+            SysDictTable dictTable = SysDictTable::newName(entity.EntityTable);
+
+            DMFDefinitionGroupExecution definitionGroupExecution;
+            Common common;
+            if (dictTable)
+            {
+                common = dictTable.makeRecord();
+
+                select count(RecId) from common
+                    join definitionGroupExecution
+                    where   common.(fieldName2id(dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                            && common.(fieldName2id(dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                            && definitionGroupExecution.Entity          == entity.EntityName
+                            && definitionGroupExecution.DefinitionGroup == definitionGroupEntity.DefinitionGroup;
+            }
+
+                
+            select firstonly CreatedDateTime, RecId from definitionGroupExecution
+            order by CreatedDateTime DESC
+            where   definitionGroupExecution.DefinitionGroup    == definitionGroupEntity.DefinitionGroup
+                    && definitionGroupExecution.Entity          == entity.EntityName;
+
+            UtcDateTime latestRun;
+            if (definitionGroupExecution.RecId)
+            {
+                latestRun = definitionGroupExecution.EndDateTime;
+            }
+
+            ttsbegin;
+            stagingCleanUpTmp.clear();
+            stagingCleanUpTmp.initValue();
+            stagingCleanUpTmp.EntityName            = entity.EntityName;
+            stagingCleanUpTmp.DefinitionGroupName   = definitionGroupEntity.DefinitionGroup;
+            stagingCleanUpTmp.EntityTable           = entity.EntityTable;
+            stagingCleanUpTmp.RecordCount           = common.RecId;
+            stagingCleanUpTmp.LatestExecuted        = definitionGroupExecution.CreatedDateTime;
+
+            if (stagingCleanUpTmp.validateWrite())
+            {
+                stagingCleanUpTmp.write();
+            }
+            ttscommit;
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>parmStagingCleanUpTmp</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Parm method to get/set the temp table
+    /// </summary>
+    /// <param name = "_stagingCleanUpTmp">Temp table</param>
+    /// <returns>Temp table</returns>
+    public DMFStagingCleanUpTmp parmStagingCleanUpTmp(DMFStagingCleanUpTmp _stagingCleanUpTmp = stagingCleanUpTmp)
+    {
+        stagingCleanUpTmp = _stagingCleanUpTmp;
+        return stagingCleanUpTmp;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>clearTable</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete all records from the temp table
+    /// </summary>
+    public void clearTable()
+    {
+        delete_from stagingCleanUpTmp;
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>

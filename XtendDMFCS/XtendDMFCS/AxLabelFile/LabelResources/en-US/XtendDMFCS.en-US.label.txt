@@ -1,0 +1,62 @@
+﻿NewLabel0=Label files created on 06/20/2019 11:22:46 for label file Id XtendDMFCS and language en-US
+ ;Label file comment - see above label
+DMFStagingCleanUpService_Prefix=DMF Staging CleanUp
+ ;DMF CleanUp stage
+DMFStagingCleanUpService_MainInfo=Deleting %1 entity stage records which are older then %2 based on %3 of the execution
+ ;DMF CleanUp stage
+DMFStagingCleanUpService_Summary=Deleted %1 records from %2 entity - %3 stage table which records were older then %4
+ ;DMF CleanUp stage
+DMFStagingCleanUpService_MenuItem_Label=Staging CleanUp service
+ ;DMF CleanUp stage
+DMFStagingCleanUpService_MenuItem_Help=Periodic function to clean records from entity stage tables
+ ;DMF CleanUp stage
+DMFStagingCleanUpTmp_Table_Label=Staging CleanUp temp table
+ ;DMF CleanUp stage
+DMFStagingCleanUpTmp_Table_Help=Temp table to store records which could help to identify which stage table requires scheduled CleanUp service
+ ;DMF CleanUp stage
+DMFStagingCleanUpDateSelector_Enum_End_Label=End date-time (write)
+ ;DMF CleanUp stage
+DMFStagingCleanUpDateSelector_Enum_Start_Label=Start date-time (stage)
+ ;DMF CleanUp stage
+DMFStagingCleanUpDateSelector_Enum_Created_Label=Created date-time (execution)
+ ;DMF CleanUp stage
+DMFStagingCleanUpDateSelector_Enum_Label=Date selector
+ ;DMF CleanUp stage
+DMFStagingCleanUpScheduler_MenuItem_Label=Staging CleanUp scheduler
+ ;DMF CleanUp stage
+DMFStagingCleanUpScheduler_MenuItem_Help=Form/Function which helps to identify number of records stored in the stage tables
+ ;DMF CleanUp stage
+DMFStagingCleanUpMaintain_Privileges_Label=DMF Staging CleanUp function/service
+ ;DMF CleanUp stage
+DMFStagingCleanUpMaintain_Privileges_Description=Periodic stage table CleanUp function
+ ;DMF CleanUp stage
+DMFStagingCleanUpServiceQuery_Title=DMF Staging CleanUp query
+ ;DMF CleanUp stage
+DMFStagingCleanUpServiceQuery_Description=Query for the periodic stage table CleanUp function
+ ;DMF CleanUp stage
+DMFStagingCleanUpController_Validate_Error=History limit (days) needs to be higher than 0!
+ ;DMF CleanUp stage
+DMFStagingCleanUpController_Caption=DMF Staging CleanUp
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_DefinitionGroup_Label=Data project restriction
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_DefinitionGroup_Help=Only delete stage table records for this data project!
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_DateSelector_Label=Date filter selector
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_DateSelector_Help=Select this field to control which date will be filtered regarding to the DMF execution!
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_NumberOfDays_Label=History limit (days)
+ ;DMF CleanUp stage
+DMFStagingCleanUpContract_NumberOfDays_Help=Only delete stage table records which are older then these days!
+ ;DMF CleanUp stage
+DMFStagingCleanUpScheduler_Form_Caption=Staging CleanUp scheduler
+ ;DMF CleanUp stage
+DMFStagingCleanUpTmp_Table_FieldGroup_Grid=Overview
+ ;DMF CleanUp stage
+DMFStagingCleanUpService_MainInfoDefGroup=Deleting %1 entity stage records which are older then %2 based %3 of the execution - restricted for %4 data project
+ ;DMF CleanUp stage
+DMFStagingCleanUpController_Validate_ErrorDefGroup=Data project name %1 is not valid!
+ ;DMF CleanUp stage
+SystemAdministration_XtendDMFCS_Submenu_DMF_Label=Data management
+ ;DMF CleanUp stage

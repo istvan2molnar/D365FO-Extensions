@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxMenuExtension xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="Microsoft.Dynamics.AX.Metadata.V1">
+	<Name>SystemAdministration.XtendDMFCS</Name>
+	<Customizations />
+	<Elements>
+		<AxMenuExtensionElement xmlns="">
+			<Parent>Periodic</Parent>
+			<MenuElement xmlns=""
+				i:type="AxMenuElementSubMenu">
+				<Name>DMF</Name>
+				<Label>@XtendDMFCS:SystemAdministration_XtendDMFCS_Submenu_DMF_Label</Label>
+				<Elements>
+					<AxMenuElement xmlns=""
+						i:type="AxMenuElementMenuItem">
+						<Name>DMFStagingCleanUpService</Name>
+						<MenuItemName>DMFStagingCleanUpService</MenuItemName>
+						<MenuItemType>Action</MenuItemType>
+					</AxMenuElement>
+					<AxMenuElement xmlns=""
+						i:type="AxMenuElementMenuItem">
+						<Name>DMFStagingCleanUpScheduler</Name>
+						<MenuItemName>DMFStagingCleanUpScheduler</MenuItemName>
+					</AxMenuElement>
+				</Elements>
+			</MenuElement>
+		</AxMenuExtensionElement>
+	</Elements>
+	<MenuElementModifications />
+	<PropertyModifications />
+</AxMenuExtension>

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AxClass xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+	<Name>DMFStagingCleanUpService</Name>
+	<SourceCode>
+		<Declaration><![CDATA[
+/// <summary>
+/// DMF Stage table CleanUp function - service class
+/// </summary>
+class DMFStagingCleanUpService extends SysOperationServiceBase
+{
+}
+]]></Declaration>
+		<Methods>
+			<Method>
+				<Name>cleanUpStage</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Main function of the class/service which will execute the CleanUp of the stage table
+    /// </summary>
+    /// <param name = "_contract">Data contract class of the service</param>
+    public void cleanUpStage(DMFStagingCleanUpContract _contract)
+    {
+        Query query = _contract.getQuery();
+        QueryRun queryRun = new queryRun(query);
+
+        setPrefix("@XtendDMFCS:DMFStagingCleanUpService_Prefix");
+
+        UtcDateTime cleanUpDate = this.calculateDate(-1 * _contract.parmNumberOfDays());
+
+        while(queryRun.next())
+        {
+            DMFEntity entity = queryRun.get(tableNum(DMFEntity));
+
+            DMFDefinitionGroup definitionGroup = DMFDefinitionGroup::find(_contract.parmDefinitionGroup());
+            if (definitionGroup.RecId)
+            {
+                info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_MainInfoDefGroup", entity.EntityName, cleanUpDate, _contract.parmDateSelector(), _contract.parmDefinitionGroup()));
+            }
+            else
+            {
+                info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_MainInfo", entity.EntityName, cleanUpDate, _contract.parmDateSelector()));
+            }
+
+            SysDictTable dictTable = SysDictTable::newName(entity.EntityTable);
+
+            if (dictTable)
+            {
+                if (definitionGroup.RecId)
+                {
+                    switch (_contract.parmDateSelector())
+                    {
+                        case DMFStagingCleanUpDateSelector::End:
+                            this.deleteStageRecordsDefGroupEndDate(dictTable, entity.EntityName, cleanUpDate, _contract.parmDefinitionGroup());
+                            break;
+                        case DMFStagingCleanUpDateSelector::Start:
+                            this.deleteStageRecordsDefGroupStartDate(dictTable, entity.EntityName, cleanUpDate, _contract.parmDefinitionGroup());
+                            break;
+                        case DMFStagingCleanUpDateSelector::Created:
+                            this.deleteStageRecordsDefGroupCreatedDate(dictTable, entity.EntityName, cleanUpDate, _contract.parmDefinitionGroup());
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (_contract.parmDateSelector())
+                    {
+                        case DMFStagingCleanUpDateSelector::End:
+                            this.deleteStageRecordsEndDate(dictTable, entity.EntityName, cleanUpDate);
+                            break;
+                        case DMFStagingCleanUpDateSelector::Start:
+                            this.deleteStageRecordsStartDate(dictTable, entity.EntityName, cleanUpDate);
+                            break;
+                        case DMFStagingCleanUpDateSelector::Created:
+                            this.deleteStageRecordsCreatedDate(dictTable, entity.EntityName, cleanUpDate);
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>calculateDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Calculation which will provide the the date for filtering the stage table
+    /// </summary>
+    /// <param name = "_numberOfDays">Number of days for the calculation</param>
+    /// <returns>Result of the calculation</returns>
+    protected UtcDateTime calculateDate(Days _numberOfDays)
+    {
+        UtcDateTime result = DateTimeUtil::newDateTime(DateTimeUtil::date(DateTimeUtil::addDays(DateTimeUtil::getSystemDateTime(), _numberOfDays)), 0);
+        return result;
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsEndDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsEndDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity      == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.WriteEndDateTime < _cleanUpDate;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)        
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity      == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.WriteEndDateTime < _cleanUpDate;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsStartDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsStartDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity      == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.StartDateTime < _cleanUpDate;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity      == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.StartDateTime < _cleanUpDate;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsCreatedDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsCreatedDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.CreatedDateTime < _cleanUpDate;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.CreatedDateTime < _cleanUpDate;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsDefGroupEndDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsDefGroupEndDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate, DMFDefinitionGroupName _definitionGroupName)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.WriteEndDateTime < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.WriteEndDateTime < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsDefGroupStartDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsDefGroupStartDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate, DMFDefinitionGroupName _definitionGroupName)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.StartDateTime   < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.StartDateTime   < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+
+    }
+
+]]></Source>
+			</Method>
+			<Method>
+				<Name>deleteStageRecordsDefGroupCreatedDate</Name>
+				<Source><![CDATA[
+    /// <summary>
+    /// Delete records from the stage table which connected to certain data entity and older than the given date filter
+    /// </summary>
+    /// <param name = "_dictTable">Stage table</param>
+    /// <param name = "_entityName"><c>Entity name</c> buffer.</param>
+    /// <param name = "_cleanUpDate">Date for filter stage table data</param>
+    protected void deleteStageRecordsDefGroupCreatedDate(SysDictTable _dictTable, DMFEntityName _entityName, UtcDateTime _cleanUpDate, DMFDefinitionGroupName _definitionGroupName)
+    {
+        DMFDefinitionGroupExecution definitionGroupExecution;
+        Common common = _dictTable.makeRecord();
+
+        select count(RecId) from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.CreatedDateTime < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+
+        int64 recordCount = common.RecId;
+        if (recordCount)
+        {
+            delete_from common
+                        exists join definitionGroupExecution
+                        where   common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, DefinitionGroup)))   == definitionGroupExecution.DefinitionGroup
+                                && common.(fieldName2id(_dictTable.id(), fieldStr(DMFDefinitionGroupExecution, ExecutionId)))    == definitionGroupExecution.ExecutionId
+                                && definitionGroupExecution.Entity          == _entityName
+                                && definitionGroupExecution.WriteEndDateTime != utcdatetimenull()
+                                && definitionGroupExecution.CreatedDateTime < _cleanUpDate
+                                && definitionGroupExecution.DefinitionGroup == _definitionGroupName;
+            info(strFmt("@XtendDMFCS:DMFStagingCleanUpService_Summary", recordCount, _entityName, _dictTable.name(), _cleanUpDate));
+        }
+    }
+
+]]></Source>
+			</Method>
+		</Methods>
+	</SourceCode>
+</AxClass>
