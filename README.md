@@ -15,7 +15,8 @@ DMFCS: This periodic function helps to clean up and keep tidy the data managemen
 - shcedule the clean up in batch periodicaly
 - filtering available based on the days passed since execution of the import/export 
 - data project filtering also available
-- class (function) can be used on manually created batch tasks too 
+- class (function) can be used on manually created batch tasks too
+
 Additionally package contains a form to help to identify the number of records in various used staging tables (be aware this form could load for a while because of the calculation running in the background). Both the service and the form can be found under System administration \ Periodic \ Data management as 'Staging CleanUp service' and 'Staging CleanUp scheduler'.
 Relates to this topic:
 https://experience.dynamics.com/ideas/idea/?ideaid=54dc867d-7a31-e811-bbd3-0003ff68ba15
