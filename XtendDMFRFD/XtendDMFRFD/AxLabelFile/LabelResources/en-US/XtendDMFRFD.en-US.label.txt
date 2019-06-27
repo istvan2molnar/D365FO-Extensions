@@ -1,0 +1,12 @@
+﻿NewLabel0=Label files created on 05/29/2019 07:58:39 for label file Id XtendDMFRFD and language en-US
+ ;Label file comment - see above label
+DMFRecurringFileDownload_Class_MessageNoFile=There is no file to download!
+ ;DMFRFD
+DMFRecurringFileDownload_Class_MessageWrongCaller=There is no caller or the caller is wrong for this function!
+ ;DMFRFD
+DMFRecurringFileDownload_Label=Recurring file download
+ ;DMFRFD
+DMFRecurringFileDownload_ActionMenuItem_Label=Download file
+ ;DMFRFD
+DMFRecurringFileDownload_ActionMenuItem_Help=Download the file of the queue
+ ;DMFRFD
